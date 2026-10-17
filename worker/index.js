@@ -129,8 +129,20 @@ export default {
             );
 
             if (!apiResponse.ok) {
+                const providerError = await apiResponse.text();
+                console.error("Gemini request failed", {
+                    status: apiResponse.status,
+                    detail: providerError.slice(0, 500).replaceAll(env.GEMINI_API_KEY, "[redacted]")
+                });
+                const error = apiResponse.status === 400
+                    ? "Gemini rechazó la solicitud. Revisa el modelo o la configuración del Worker."
+                    : apiResponse.status === 401 || apiResponse.status === 403
+                        ? "Gemini rechazó la clave de API. Guarda una clave válida en el Worker."
+                        : apiResponse.status === 429
+                            ? "Se alcanzó el límite de uso de Gemini. Intenta de nuevo más tarde."
+                            : "El servicio de IA no pudo responder. Intenta de nuevo más tarde.";
                 return jsonResponse({
-                    error: "El servicio de IA no pudo responder. Intenta de nuevo más tarde."
+                    error
                 }, 502, origin);
             }
 

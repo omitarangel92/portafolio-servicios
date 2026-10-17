@@ -152,9 +152,11 @@ export function initInteractiveAvatar() {
             conversation.splice(0, Math.max(0, conversation.length - 12));
             speak(reply);
         } catch (error) {
-            const message = error instanceof Error
-                ? `No se pudo obtener una respuesta: ${error.message}`
-                : "No se pudo conectar con el asistente. Intenta de nuevo.";
+            const message = error instanceof TypeError
+                ? "No se pudo conectar con Cloudflare. Revisa la conexión y el permiso CORS del Worker para este sitio."
+                : error instanceof Error
+                    ? `No se pudo obtener una respuesta: ${error.message}`
+                    : "No se pudo conectar con el asistente. Intenta de nuevo.";
             response.textContent = message;
             speak(message);
         }

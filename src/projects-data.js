@@ -1,3 +1,8 @@
+import project1Image from "../images/project-1.jpg";
+import project2Image from "../images/project-2.jpg";
+import project3Image from "../images/project-3.jpg";
+import project8Image from "../images/project-8.png";
+
 export const projects = [
   {
     title: "NEBUFIT30",
@@ -19,7 +24,7 @@ export const projects = [
     tools: ["HTML5/CSS3", "JavaScript", "Firebase"],
     url: "https://omitarangel92.github.io/juegodelimpostor/",
     icon: "fa-users",
-    image: "images/project-8.png"
+    image: project8Image
   },
   {
     title: "Zoni Language Academy",
@@ -30,7 +35,7 @@ export const projects = [
     tools: ["Bootstrap", "JavaScript", "SEO"],
     url: "https://www.zoniacademy.com/",
     icon: "fa-graduation-cap",
-    image: "images/project-1.jpg"
+    image: project1Image
   },
   {
     title: "Zoni Edu (USA)",
@@ -41,7 +46,7 @@ export const projects = [
     tools: ["HTML/CSS", "Optimización Web"],
     url: "https://zoni.edu/",
     icon: "fa-globe-americas",
-    image: "images/project-2.jpg"
+    image: project2Image
   },
   {
     title: "Recarga VoIP",
@@ -52,6 +57,6 @@ export const projects = [
     tools: ["Bootstrap", "Animate.css", "UX/UI"],
     url: "https://recargavoip.com/web/",
     icon: "fa-phone-volume",
-    image: "images/project-3.jpg"
+    image: project3Image
   }
 ];
