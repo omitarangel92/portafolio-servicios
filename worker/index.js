@@ -29,6 +29,8 @@ const MAX_MESSAGE_LENGTH = 1000;
 const MAX_HISTORY_ITEMS = 8;
 const MAX_AUDIO_BASE64_LENGTH = 1500000;
 const ALLOWED_AUDIO_TYPES = new Set(["audio/webm", "audio/ogg", "audio/mp4", "audio/wav", "audio/mpeg"]);
+const SPEECH_MODEL = "@cf/openai/whisper-large-v3-turbo";
+const CHAT_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const ALLOWED_LOCAL_ORIGINS = new Set([
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -52,6 +54,17 @@ function jsonResponse(body, status, origin) {
 
 function originIsAllowed(origin, env) {
     return origin === env.ALLOWED_ORIGIN || ALLOWED_LOCAL_ORIGINS.has(origin);
+}
+
+function workersAIErrorResponse(error, origin) {
+    const detail = error instanceof Error ? error.message : "UnknownError";
+    console.error("Workers AI request failed", detail.slice(0, 300));
+    const quotaReached = /quota|neuron|daily limit|rate limit|too many requests/i.test(detail);
+    return jsonResponse({
+        error: quotaReached
+            ? "Se agotó el cupo diario gratuito de Cloudflare Workers AI. La cuota se reinicia diariamente; revisa el consumo en tu panel de Cloudflare."
+            : "Cloudflare Workers AI no pudo procesar la pregunta. Intenta de nuevo en un momento."
+    }, quotaReached ? 429 : 502, origin);
 }
 
 export default {
@@ -107,9 +120,12 @@ export default {
             return jsonResponse({ error: "El historial de conversación no es válido." }, 400, origin);
         }
 
-        const isAudioRequest = body.audio !== undefined;
-        let contents;
+        if (!env.AI) {
+            return jsonResponse({ error: "Workers AI no está enlazado al Worker de Cloudflare." }, 503, origin);
+        }
 
+        const isAudioRequest = body.audio !== undefined;
+        let message;
         if (isAudioRequest) {
             const audio = body.audio;
             const mimeType = typeof body.mimeType === "string"
@@ -127,147 +143,53 @@ export default {
                 return jsonResponse({ error: "El audio no es válido o supera el tamaño permitido." }, 400, origin);
             }
 
-            const historyContents = history.map((item) => ({
-                role: item.role,
-                parts: [{ text: item.text.trim() }]
-            }));
-            historyContents.push({
-                role: "user",
-                parts: [
-                    {
-                        text: "Escucha el audio del visitante. Identifica la pregunta en español y responde como asistente del portafolio. Devuelve un JSON con transcript (transcripción exacta) y reply (respuesta breve, natural y útil en español). Si no se entiende el audio, deja transcript vacío y explica brevemente el problema en reply."
-                    },
-                    { inline_data: { mime_type: mimeType, data: audio } }
-                ]
-            });
-            contents = historyContents;
+            try {
+                const transcription = await env.AI.run(SPEECH_MODEL, {
+                    audio,
+                    task: "transcribe",
+                    language: "spanish",
+                    initial_prompt: "Omar Angel Loaiza, Omitar, Ratimo Design, UX/UI, Manizales, Bogotá, AstraZeneca."
+                });
+                message = typeof transcription?.text === "string" ? transcription.text.trim() : "";
+                if (!message) {
+                    return jsonResponse({
+                        error: "No entendí la pregunta. Intenta hablar más cerca del micrófono."
+                    }, 422, origin);
+                }
+            } catch (error) {
+                return workersAIErrorResponse(error, origin);
+            }
         } else {
-            const message = typeof body?.message === "string" ? body.message.trim() : "";
+            message = typeof body?.message === "string" ? body.message.trim() : "";
             if (!message || message.length > MAX_MESSAGE_LENGTH) {
                 return jsonResponse({
                     error: `Haz una pregunta de hasta ${MAX_MESSAGE_LENGTH} caracteres.`
                 }, 400, origin);
             }
-
-            contents = history.map((item) => ({
-                role: item.role,
-                parts: [{ text: item.text.trim() }]
-            }));
-            contents.push({ role: "user", parts: [{ text: message }] });
         }
-
-        if (!env.GEMINI_API_KEY) {
-            return jsonResponse({ error: "Falta configurar la clave de Gemini en el Worker." }, 503, origin);
-        }
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 20000);
 
         try {
-            const apiResponse = await fetch(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-goog-api-key": env.GEMINI_API_KEY
-                    },
-                    body: JSON.stringify({
-                        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                        contents,
-                        generationConfig: {
-                            temperature: 0.5,
-                            maxOutputTokens: isAudioRequest ? 360 : 220,
-                            ...(isAudioRequest ? {
-                                responseMimeType: "application/json",
-                                responseSchema: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        transcript: { type: "STRING" },
-                                        reply: { type: "STRING" }
-                                    },
-                                    required: ["transcript", "reply"]
-                                }
-                            } : {})
-                        }
-                    }),
-                    signal: controller.signal
-                }
-            );
-
-            if (!apiResponse.ok) {
-                const providerError = await apiResponse.text();
-                let providerMessage = "";
-                try {
-                    providerMessage = JSON.parse(providerError)?.error?.message || "";
-                } catch {
-                    providerMessage = "";
-                }
-                providerMessage = (providerMessage || providerError)
-                    .replaceAll(env.GEMINI_API_KEY, "[redacted]")
-                    .replace(/\s+/g, " ")
-                    .slice(0, 240);
-                console.error("Gemini request failed", {
-                    status: apiResponse.status,
-                    detail: providerMessage || providerError.slice(0, 500).replaceAll(env.GEMINI_API_KEY, "[redacted]")
-                });
-                const error = apiResponse.status === 400
-                    ? "Gemini rechazó la solicitud. Revisa el modelo o la configuración del Worker."
-                    : apiResponse.status === 401 || apiResponse.status === 403
-                        ? "Gemini rechazó la clave de API. Guarda una clave válida en el Worker."
-                        : apiResponse.status === 429
-                            ? "Se alcanzó la cuota o el límite de solicitudes de Gemini. Revisa los límites del proyecto en Google AI Studio o inténtalo cuando se restablezcan."
-                            : apiResponse.status === 404
-                                ? `Gemini respondió 404: ${providerMessage || "no encontró el modelo para esta clave."}`
-                                : "Gemini no está disponible en este momento. Intenta de nuevo más tarde.";
-                return jsonResponse({
-                    error
-                }, 502, origin);
+            const messages = [
+                { role: "system", content: SYSTEM_PROMPT },
+                ...history.map((item) => ({
+                    role: item.role === "model" ? "assistant" : "user",
+                    content: item.text.trim()
+                })),
+                { role: "user", content: message }
+            ];
+            const result = await env.AI.run(CHAT_MODEL, {
+                messages,
+                temperature: 0.5,
+                max_tokens: 220
+            });
+            const reply = typeof result?.response === "string" ? result.response.trim() : "";
+            if (!reply) {
+                return jsonResponse({ error: "Workers AI devolvió una respuesta vacía. Intenta de nuevo." }, 502, origin);
             }
 
-            const result = await apiResponse.json();
-            const responseText = result.candidates?.[0]?.content?.parts
-                ?.map((part) => part.text || "")
-                .join("")
-                .trim();
-
-            if (!responseText) {
-                return jsonResponse({
-                    error: isAudioRequest
-                        ? "No detecté palabras claras. Intenta hablar un poco más cerca del micrófono."
-                        : "La IA devolvió una respuesta vacía."
-                }, isAudioRequest ? 422 : 502, origin);
-            }
-
-            if (isAudioRequest) {
-                let audioResult;
-                try {
-                    audioResult = JSON.parse(responseText);
-                } catch {
-                    console.error("Gemini returned invalid audio response JSON");
-                    return jsonResponse({ error: "Gemini no devolvió una respuesta de voz válida. Intenta de nuevo." }, 502, origin);
-                }
-                const transcript = typeof audioResult.transcript === "string" ? audioResult.transcript.trim() : "";
-                const reply = typeof audioResult.reply === "string" ? audioResult.reply.trim() : "";
-                if (!transcript || !reply) {
-                    return jsonResponse({
-                        error: reply || "No entendí la pregunta. Intenta hablar más cerca del micrófono."
-                    }, 422, origin);
-                }
-                return jsonResponse({ transcript, reply }, 200, origin);
-            }
-
-            const reply = responseText;
-            return jsonResponse({ reply }, 200, origin);
+            return jsonResponse(isAudioRequest ? { transcript: message, reply } : { reply }, 200, origin);
         } catch (error) {
-            console.error("Gemini connection failed", error instanceof Error ? error.name : "UnknownError");
-            return jsonResponse({
-                error: error instanceof Error && error.name === "AbortError"
-                    ? "Gemini tardó demasiado en responder. Intenta de nuevo."
-                    : "Cloudflare no pudo conectar con Gemini. Revisa el servicio y vuelve a intentarlo."
-            }, 502, origin);
-        } finally {
-            clearTimeout(timeout);
+            return workersAIErrorResponse(error, origin);
         }
     }
 };
