@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Ratimo Design - Portafolio de servicios de Omar Angel Loaiza: desarrollo web Front-End, UX/UI y diseño gráfico hechos con esmero, dedicación y pasión.">
+    <meta name="author" content="Omar Angel Loaiza">
+    <link rel="icon" type="image/png" href="./assets/favicon-qugPzStS.png" sizes="64x64">
+    <title>Omar Angel Loaiza | Ratimo Design - Portafolio 3D</title>
+    <script>
+        (function () { try { var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); document.documentElement.dataset.theme = t; } catch (e) { document.documentElement.dataset.theme = 'dark'; } })();
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script type="module" crossorigin src="./assets/index-BVVzTGRz.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BNA0UwOn.css">
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <nav class="floating-nav">
+        <a href="#" class="nav-logo"><img src="./assets/logo-RD@2x-Bt-B4Wgc.png" alt="Ratimo Design" class="logo-img"></a>
+        <div class="nav-links">
+            <a href="#about">Sobre mí</a>
+            <a href="#services">Servicios</a>
+            <a href="#why">¿Por qué yo?</a>
+            <a href="#projects">Casos de Estudio</a>
+            <a href="#designs">Diseños</a>
+        </div>
+        <div class="nav-right">
+            <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Cambiar entre modo día y noche"
+                title="Modo día / noche"><i class="fas fa-sun"></i><i class="fas fa-moon"></i></button>
+            <a href="#contact" class="btn-neon nav-cta">Contáctame</a>
+        </div>
+    </nav>
+
+    <!-- Hero / Banner Section con el Avatar Interactivo Parlante -->
+    <header class="hero-section">
+        <div class="hero-reveal">
+            <div class="badge"><i class="fas fa-layer-group"></i> Ing. de Sistemas & UX/UI Designer</div>
+            <h1 class="hero-title">Mi Ciencia es crear <span class="glow-text">armonía y sencillez</span> en la
+                experiencia del usuario.</h1>
+            <p class="muted lead">Transformo requerimientos técnicos complejos en interfaces funcionales, estéticas y
+                orientadas a resultados de alto impacto.</p>
+            <div class="hero-cta">
+                <a href="#projects" class="btn-neon">Ver Casos de Estudio <i class="fas fa-arrow-right"></i></a>
+                <a href="#contact" class="btn-outline"><i class="fas fa-paper-plane"></i> Contáctame</a>
+            </div>
+        </div>
+
+        <div class="avatar-card" id="talking-avatar-card">
+            <div class="avatar-portrait">
+                <img src="./assets/tu-avatar-DHYXvh_D.png" alt="Avatar ilustrado de Omar Angel Loaiza" class="hero-img"
+                    id="avatar-speaking-img">
+                <span class="avatar-mouth" aria-hidden="true"></span>
+            </div>
+            <div class="avatar-agent">
+                <p class="avatar-response" id="avatar-response" aria-live="polite">
+                    Estoy preparando el micrófono para conversar contigo.
+                </p>
+                <p class="avatar-status" id="avatar-status" role="status" aria-live="polite"></p>
+                <div class="avatar-actions">
+                    <button class="avatar-action" id="avatar-mic" type="button" aria-pressed="true">
+                        <i class="fas fa-microphone" aria-hidden="true"></i> Activar micrófono
+                    </button>
+                    <button class="avatar-action" id="avatar-stop" type="button">
+                        <i class="fas fa-volume-xmark" aria-hidden="true"></i> Detener voz
+                    </button>
+                </div>
+                <p class="avatar-hint">El navegador solicitará permiso para usar el micrófono. Puedes pausarlo cuando quieras.</p>
+            </div>
+        </div>
+    </header>
+
+
+
+
+    <section id="about" class="container section-spacing">
+        <div class="glass-card pad-lg">
+            <div class="section-title-center">
+                <span class="section-tag">Trayectoria Profesional</span>
+                <h2>Sobre mí</h2>
+                <p class="section-desc">Ingeniero de Sistemas y Especialista en Experiencia Digital (UX/UI), con una
+                    trayectoria de más de una década en el diseño visual y cinco años consolidando soluciones en el
+                    desarrollo web Front-End. Mi experiencia combina la precisión analítica de la ingeniería para
+                    construir sistemas robustos con la creatividad del diseño gráfico para garantizar una experiencia de
+                    usuario (UX/UI) impecable y estratégica.</p>
+            </div>
+            <div class="about-grid">
+                <div>
+                    <h3 class="col-title"><i class="fas fa-graduation-cap"></i> Estudios</h3>
+                    <div class="timeline-card">
+                        <h4>Bachiller académico en Diseño Gráfico</h4>
+                        <p>Liceo Isabel La Católica - Manizales</p><span>2004 - 2009</span>
+                    </div>
+                    <div class="timeline-card">
+                        <h4>Técnico en Diseño Gráfico Digital</h4>
+                        <p>Unitécnica - Manizales</p><span>2010 - 2012</span>
+                    </div>
+                    <div class="timeline-card">
+                        <h4>Ingeniero de Sistemas</h4>
+                        <p>Corporación Universitaria Remington - Manizales</p><span>2013 - 2019</span>
+                    </div>
+                    <div class="timeline-card">
+                        <h4>Estudiante de inglés (Nivel B1)</h4>
+                        <p>American School Way - Bogotá</p><span>2022 - 2024</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="col-title"><i class="fas fa-briefcase"></i> Experiencia Laboral</h3>
+                    <div class="timeline-card">
+                        <h4>Desarrollador web y Diseñador gráfico - UX/UI</h4>
+                        <p>Astrazeneca - Bogotá</p><span>Sep 2024 - (Actualmente)</span>
+                    </div>
+                    <div class="timeline-card">
+                        <h4>Desarrollador y administrador Web</h4>
+                        <p>Zoni Language Academy - Manizales</p><span>Sep 2022 - Ene 2024</span>
+                    </div>
+                    <div class="timeline-card">
+                        <h4>Ingeniero de Soporte - Diseñador Web y Gráfico</h4>
+                        <p>Recarga VoIP S.A.S - Manizales</p><span>Feb a Ago 2022</span>
+                    </div>
+                    <div class="timeline-card">
+                        <h4>Técnico en Sistemas - Diseñador - Dev Web</h4>
+                        <p>Becall Outsourcing S.A.S - Manizales</p><span>2019 - 2021</span>
+                    </div>
+                </div>
+            </div>
+            <div class="about-cta">
+                <a href="#contact" class="btn-neon">Contáctame</a>
+                <a href="Hoja-de-vida-2026.pdf" download="CV-OmarAngelLoaiza.pdf" class="btn-outline">Descargar CV <i
+                        class="fas fa-download"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <section id="services" class="container section-spacing">
+        <div class="section-title-center">
+            <span class="section-tag">¿Qué ofrezco?</span>
+            <h2>Algunos de mis servicios</h2>
+            <p class="section-desc">Enfocado al logro, responsabilidad, creativo e imaginativo. Mi ciencia se basa en la
+                creación de buena presentación de mi trabajo a nivel funcional y visual.</p>
+        </div>
+        <div class="services-grid">
+            <div class="glass-card service-card"><i class="fas fa-tv"></i>
+                <h3>Diseño Gráfico Digital</h3>
+                <p class="muted">Creo piezas gráficas para publicidad en redes sociales o impresa, manejo la atracción
+                    de imágenes, color y palabras con llamados a la acción.</p>
+            </div>
+            <div class="glass-card service-card"><i class="fas fa-code"></i>
+                <h3>Desarrollo Web - Front End</h3>
+                <p class="muted">Mi metodología es MOBILE FIRST, siempre adecuando la UX/UI para cada proyecto y atraer
+                    a clientes con información e imágenes de calidad.</p>
+            </div>
+            <div class="glass-card service-card"><i class="far fa-gem"></i>
+                <h3>Ilustración Vectorial</h3>
+                <p class="muted">En este mundo, manejo la ilustración digital y tradicional (papel y lápiz), soy
+                    dibujante empírico y manejo manualidades para trabajos extras.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ¿Por qué trabajar conmigo? + logos de herramientas -->
+    <section id="why" class="container section-spacing">
+        <div class="why-grid glass-card">
+            <div class="why-img"><img src="./assets/details-background-BeRvRPqn.jpg" alt="Fondo de detalles" loading="lazy"></div>
+            <div class="why-body">
+                <span class="section-tag">Mis herramientas</span>
+                <h2>¿Por qué trabajar conmigo?</h2>
+                <div class="why-tabs" role="tablist">
+                    <button class="on" data-tab="intro">Mi propuesta</button>
+                    <button data-tab="design">Diseño gráfico</button>
+                    <button data-tab="front">Desarrollo web</button>
+                    <button data-tab="ai">Innovación IA</button>
+                </div>
+                <div class="why-panel on" id="tab-intro">
+                    <p class="why-lead">Fusiono la creatividad de diseño UX/UI con la eficiencia del desarrollo
+                        Front-End y me apalanco de la Inteligencia Artificial para entregar proyectos de alto impacto.
+                    </p>
+                    <p class="muted">Mi filosofía se basa en la adaptación constante y la búsqueda de soluciones
+                        innovadoras que superen las expectativas del mercado digital.</p>
+                </div>
+                <div class="why-panel" id="tab-design">
+                    <p class="muted">Dominio profesional de las herramientas esenciales para diseño estático, vectorial
+                        y producción de vídeo, garantizando piezas visuales de alta calidad.</p>
+                    <div class="icons-container"><img class="icons-img" src="./assets/photoshop-DgsP5krf.png" alt="Adobe Photoshop"
+                            loading="lazy"><img class="icons-img" src="./assets/illustrator-DqptC2ln.png" alt="Adobe Illustrator"
+                            loading="lazy"><img class="icons-img" src="./assets/coreldraw-CU-k5HYl.png" alt="Corel Draw"
+                            loading="lazy"><img class="icons-img" src="./assets/premier-1YhR98MA.png" alt="Adobe Premiere Pro"
+                            loading="lazy"><img class="icons-img" src="./assets/capcut-BlFtkGor.png" alt="CapCut"
+                            loading="lazy"><img class="icons-img" src="./assets/xd-BhO0xz78.png" alt="Adobe XD" loading="lazy"><img
+                            class="icons-img" src="./assets/figma-CoCSJPIY.png" alt="Figma" loading="lazy"></div>
+                </div>
+                <div class="why-panel" id="tab-front">
+                    <p class="muted">Capacidad de maquetación y desarrollo de interfaces web responsivas, funcionales y
+                        optimizadas, usando los estándares más recientes.</p>
+                    <div class="icons-container"><img class="icons-img" src="./assets/html-DIDmObhU.png" alt="HTML5"
+                            loading="lazy"><img class="icons-img" src="./assets/css-AgSJ68r_.png" alt="CSS3" loading="lazy"><img
+                            class="icons-img" src="./assets/javascript-fRdUt7C-.png" alt="JavaScript" loading="lazy"><img
+                            class="icons-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTExIDc5LjE1ODMyNSwgMjAxNS8wOS8xMC0wMToxMDoyMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTUgKFdpbmRvd3MpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOkYzRUFEQTNFOTg4RTExRUI4QUJGOTVCNDNGMEFDQUFFIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOkYzRUFEQTNGOTg4RTExRUI4QUJGOTVCNDNGMEFDQUFFIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6RjNFQURBM0M5ODhFMTFFQjhBQkY5NUI0M0YwQUNBQUUiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6RjNFQURBM0Q5ODhFMTFFQjhBQkY5NUI0M0YwQUNBQUUiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz5iX3nJAAAFqUlEQVR42uydb2iVVRzHz9U1o8w/ZeWslNRoalGJFulSUwxRhFQa6w/NIChGwShyyCgMGszAGBUqRbBXpU6Q2JubvlDZrdRMo0hHrYiBrEyz7A+6Zev785yL925e73nmfc458ny/8OXcF+e5z7PfZ7/znHPuec6TUhH0WFXjTBRL4bnwNLgCLldUrnrhHrgTzsDptkzTQduDUxYQJOC1cD08nfEeko7CLXAr4PQOGQhgLEaxEZ7KmJZEXXAdoOyKBAQghqNYD7/MGMaiDXADwJwrCgQwrkGxBV7OuMWqdrgGUP4pCMRkxg7CcAplRW6mDBtQYT1hONVyE/PBGWJu4DsZIy96JHujT+V0bb9lb8pr72uGdImzTVYtYXiVxH517j2knjHxrvMMUmY65EvGIwjNlgxZyjgEoyUCZC7jEIyqBMg0xiEYVQqQCsYhGFUIEP6eEY7KhzEGYYlACIQikCtIZY7PJzMCfzk+5yh4BHwTPI5A8vVsW6bpK19/rPk1tBK+H56v9CzFqCQD8Srzc+kh480AJJmzEn4JnsV7iH9AZ+GPTMZUK72eikACANMPt+Hj3crzr6YEkg/mJIpl8pFAwoHyL4qn4AMEEg6UXgOlj0DCgfI9ig/Y7dXjBVlP/EQJvuo0/BP8BbwdQf484vHvwM8zQ5SSAdzoEvg2+CEzzvgMoPfDd0bIkiNKL49ikxWTZLyxLwoUaC+BxKsxSj9iYStmiAMtRJZMsaz7A4G40QLLemcIxI1s7yN9BOJGYyPccwgkII0nEDc6EaGrTCAOdNiy3nwCiV/Sc9pVrBK6xpIdlQQSvza2ZZpOWdRb4/rCkghkH9xokR0Po1hFIPHqPXgRsuNMERgTUHzo4wKTsOrkZ/gT+G2AOGSRGTea+uMJ5IJeU3qzlsvRWfgkIBy3PQAwZCnQVniyrz88SCAIYjeKblfnAwgZjTfAr8DDff7tiVooVwDGAhTb4RtCuJ7ET50gG/eguB1+HN7t+3oSnyEGyp9K74C0BRkjD8HKb+n3MUPCgPMpigfgdwkkHCh98Iv42MQmS99oH0Vxbwm+qh/+Xbq/Sk8mHkWg/4tw/KtKz2WtSjQQSIDUxvC9vwG2jMCbAeaYRab0o76sy5IZXycP+yStyboefkEyBYGutmy+TrhsupJ6D7lORuSA8oxl/feVXgVJIDFrE6BMtsiSv83gkUBiljzS1mBZt51AHHXqkCU2ceggEDeS5UB3WDRb0nX+hUDc6GbLescIxF132EZ/EIgbnbKsd5pA3Oh4KPEiEL33yneWdccRSPz6+GKvjSigKQQSr2Tm902rwUpV461K7yhEIDHqDWTH15Z1F3FgGK/kLTfrItSvdnFRSfxN/Rt4DTIjbXsAmquRytEq+FCByCvnSvU4sixg+BWWjdM6AOLwEL7jOfjaxAJB0JpRNIdwLciOSShed3U+dnsvDUN2lNjmKjsIpDgMWefr9JE2LpQrPOaQzHjQ9bkJJB+EtBhPw28p+8emCSQmELI76Vp4ps9rKUswBHlD3T1mwPckPDGE6ypLQOCvUnoO6hZY7g13Kb0qUvbRCm6na9dAOhCgc47OJStKrr7S/oFcAxnJOxbHIQRCXR6QXoYhGJ1/F24P4xCMegRIJ+MQjDoFSIZxCEYZAZJmHIJROvuCe9nBma9g9St5/nF6ttvbwnh4V0vuOKQV7mJMvKnLMNBAzPsy6hgXb6ozDC7sfHOku+PHGRPnycOQcxgfp9oAGJtzR+q5kuft2hkjZ2pXA55xzANiFh3XEIozGDUDF3oP2qwLTVcfmq7s0hc2XzE1U0q/9XTQPGLqUkdhfLJY6XdtTGUMS9abkht4wT2DU8W+AVDKUayG6zl4HPqgz4wzWi+WFZGADIAjm0QugauU3iWnAi5nvPMkAZcZdJm0lXnCNCActD34fwEGADYyZ9OsJa6WAAAAAElFTkSuQmCC" alt="Bootstrap" loading="lazy"></div>
+                </div>
+                <div class="why-panel" id="tab-ai">
+                    <p class="muted">Adopción de IA en el flujo de trabajo para maximizar la eficiencia en la generación
+                        de activos, copywriting y soporte lógico/código en tiempo real.</p>
+                    <div class="icons-container"><img class="icons-img" src="./assets/chatgpt-21AgqD5R.png" alt="ChatGPT"
+                            loading="lazy"><img class="icons-img" src="./assets/gemini-BfagSOHg.png" alt="Gemini AI"
+                            loading="lazy"><img class="icons-img" src="./assets/firefly-D769v7Y3.png" alt="Adobe Firefly"
+                            loading="lazy"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Casos de estudio: carrusel 3D + 3 pilares -->
+    <section id="projects" class="section-spacing">
+        <div class="container">
+            <div class="section-title-center">
+                <small class="section-tag">Proyectos</small>
+                <h2>Casos de Estudio y Trabajos</h2>
+                <p class="section-desc">Arrastra, usa las flechas o toca una tarjeta para recorrer los proyectos.</p>
+            </div>
+
+            <div class="pj-grid">
+                <!-- Columna izquierda: carrusel 3D -->
+                <div class="cf-col">
+                    <div class="cf-stage" id="cf-stage"></div>
+                    <div class="pj-progress"><i id="pj-bar"></i></div>
+                </div>
+
+                <!-- Columna derecha: pilares + herramientas + navegación -->
+                <div class="pj-info">
+                    <div class="pj-head">
+                        <div>
+                            <span class="section-tag pj-fade" id="pj-tag"></span>
+                            <h3 class="pj-title pj-fade" id="pj-title"></h3>
+                        </div>
+                        <span class="pj-count pj-fade" id="pj-count"></span>
+                    </div>
+
+                    <div class="pillars">
+                        <article class="pillar p-problem pj-fade">
+                            <div class="p-ico"><i class="fas fa-triangle-exclamation"></i></div>
+                            <div>
+                                <h4>Problema</h4>
+                                <p id="pj-problem"></p>
+                            </div>
+                        </article>
+                        <article class="pillar p-solution pj-fade">
+                            <div class="p-ico"><i class="fas fa-wand-magic-sparkles"></i></div>
+                            <div>
+                                <h4>Solución</h4>
+                                <p id="pj-solution"></p>
+                            </div>
+                        </article>
+                        <article class="pillar p-result pj-fade">
+                            <div class="p-ico"><i class="fas fa-chart-line"></i></div>
+                            <div>
+                                <h4>Resultado</h4>
+                                <p id="pj-result"></p>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="pj-foot pj-fade">
+                        <div><small class="muted">Herramientas y tecnologías</small>
+                            <div class="tech-tags" id="pj-tools"></div>
+                        </div>
+                        <a id="pj-link" class="btn-neon" href="#" target="_blank" rel="noopener"></a>
+                    </div>
+
+                    <div class="cf-controls">
+                        <button id="pj-prev" aria-label="Proyecto anterior"><i class="fas fa-arrow-left"></i></button>
+                        <div id="pj-tabs" class="pj-tabs"></div>
+                        <button id="pj-next" aria-label="Proyecto siguiente"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="designs" class="container section-spacing">
+        <div class="section-title-center">
+            <span class="section-tag">Creatividad Gráfica</span>
+            <h2>Post publicitarios, logos y vectores</h2>
+            <p class="section-desc">23 piezas entre posts publicitarios, logos e ilustraciones vectoriales.</p>
+        </div>
+        <div class="ds-wrap">
+            <button class="ds-nav" id="ds-prev" aria-label="Anterior"><i class="fas fa-arrow-left"></i></button>
+            <div class="ds-track" id="ds-track">
+                <button class="ds-item" data-full="images/work-1.jpg" aria-label="Ampliar diseño 1"><img
+                        src="./assets/work-1-B3pMnIKJ.jpg" alt="Diseño 1" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-2.jpg" aria-label="Ampliar diseño 2"><img
+                        src="./assets/work-2-IF4qfLBr.jpg" alt="Diseño 2" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-3.jpg" aria-label="Ampliar diseño 3"><img
+                        src="./assets/work-3-CeNO64d4.jpg" alt="Diseño 3" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-4.png" aria-label="Ampliar diseño 4"><img
+                        src="./assets/work-4-D5mMU6x0.png" alt="Diseño 4" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-5.png" aria-label="Ampliar diseño 5"><img
+                        src="./assets/work-5-DWRLjH8N.png" alt="Diseño 5" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-6.jpg" aria-label="Ampliar diseño 6"><img
+                        src="./assets/work-6-iIM7SxZF.jpg" alt="Diseño 6" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-7.jpg" aria-label="Ampliar diseño 7"><img
+                        src="./assets/work-7-7WcdEvcl.jpg" alt="Diseño 7" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-8.jpg" aria-label="Ampliar diseño 8"><img
+                        src="./assets/work-8-CRhqpIHx.jpg" alt="Diseño 8" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-9.jpg" aria-label="Ampliar diseño 9"><img
+                        src="./assets/work-9-BwP8j21M.jpg" alt="Diseño 9" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-10.jpg" aria-label="Ampliar diseño 10"><img
+                        src="./assets/work-10-CC5NvFiQ.jpg" alt="Diseño 10" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-11.jpg" aria-label="Ampliar diseño 11"><img
+                        src="./assets/work-11-BYAJBKAf.jpg" alt="Diseño 11" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-12.jpg" aria-label="Ampliar diseño 12"><img
+                        src="./assets/work-12-HBqp_Tqr.jpg" alt="Diseño 12" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-13.jpg" aria-label="Ampliar diseño 13"><img
+                        src="./assets/work-13-D_H2dFCF.jpg" alt="Diseño 13" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-14.jpg" aria-label="Ampliar diseño 14"><img
+                        src="./assets/work-14-T6KkvUGq.jpg" alt="Diseño 14" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-15.jpg" aria-label="Ampliar diseño 15"><img
+                        src="./assets/work-15-fU5G89cC.jpg" alt="Diseño 15" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-16.jpg" aria-label="Ampliar diseño 16"><img
+                        src="./assets/work-16-uOtJzqro.jpg" alt="Diseño 16" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-17.jpg" aria-label="Ampliar diseño 17"><img
+                        src="./assets/work-17-DuylYnU1.jpg" alt="Diseño 17" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-18.jpg" aria-label="Ampliar diseño 18"><img
+                        src="./assets/work-18-CtMrZw6U.jpg" alt="Diseño 18" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-19.jpg" aria-label="Ampliar diseño 19"><img
+                        src="./assets/work-19-CfZ46Ma0.jpg" alt="Diseño 19" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-20.png" aria-label="Ampliar diseño 20"><img
+                        src="./assets/work-20-HBp52_9h.png" alt="Diseño 20" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-21.png" aria-label="Ampliar diseño 21"><img
+                        src="./assets/work-21-Bmowy5z_.png" alt="Diseño 21" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-22.jpg" aria-label="Ampliar diseño 22"><img
+                        src="./assets/work-22-C5dM7I_g.jpg" alt="Diseño 22" loading="lazy" draggable="false"></button>
+                <button class="ds-item" data-full="images/work-23.jpg" aria-label="Ampliar diseño 23"><img
+                        src="./assets/work-23-Olnb8qUe.jpg" alt="Diseño 23" loading="lazy" draggable="false"></button>
+            </div>
+            <button class="ds-nav" id="ds-next" aria-label="Siguiente"><i class="fas fa-arrow-right"></i></button>
+        </div>
+        <div class="ds-hint muted"><i class="fas fa-hand-pointer"></i> Desliza o usa las flechas · clic para ampliar
+        </div>
+    </section>
+
+    <div id="image-modal" class="modal-overlay">
+        <span class="modal-close">&times;</span>
+        <img class="modal-img-box" id="modal-img" alt="Diseño ampliado">
+    </div>
+
+    <!-- Contacto -->
+    <section id="contact" class="container section-spacing">
+        <div class="contact-shell">
+            <div class="contact-orb"></div>
+            <div class="contact-left">
+                <span class="status"><i></i> Disponible para nuevos proyectos</span>
+                <h2 class="contact-big">Construyamos algo <span class="glow-text">memorable</span>.</h2>
+                <p class="muted">Cuéntame tu idea y te respondo con una propuesta clara, sin rodeos.</p>
+                <div class="channels">
+                    <button type="button" id="copy-mail" class="channel magnetic"><i class="fas fa-envelope"></i>
+                        <div><small>Correo (clic para copiar)</small><span>omitarangel1992@gmail.com</span></div>
+                    </button>
+                    <a class="channel magnetic" href="tel:+573106598981"><i class="fas fa-phone-alt"></i>
+                        <div><small>Llámame</small><span>+57 310 659 8981</span></div>
+                    </a>
+                    <a class="channel magnetic" href="https://wa.me/573106598981" target="_blank" rel="noopener"><i
+                            class="fab fa-whatsapp"></i>
+                        <div><small>WhatsApp</small><span>Respuesta rápida</span></div>
+                    </a>
+                </div>
+            </div>
+
+            <form id="contact-form" class="contact-form" autocomplete="off">
+                <h3>Arma tu mensaje</h3>
+                <label>¿Cómo te llamas?<input name="name" type="text" placeholder="Tu nombre"></label>
+                <div class="chips-label">¿Qué necesitas?</div>
+                <div class="chips">
+                    <button type="button" class="chip">Desarrollo Web</button>
+                    <button type="button" class="chip">UX/UI</button>
+                    <button type="button" class="chip">Diseño Gráfico</button>
+                    <button type="button" class="chip">Ilustración</button>
+                    <button type="button" class="chip">Rediseño</button>
+                </div>
+                <label>Cuéntame más<textarea name="msg" rows="4"
+                        placeholder="Objetivo, plazos, referencias..."></textarea></label>
+                <div class="via">
+                    <label><input type="radio" name="via" value="wa" checked><span><i class="fab fa-whatsapp"></i>
+                            WhatsApp</span></label>
+                    <label><input type="radio" name="via" value="mail"><span><i class="fas fa-envelope"></i>
+                            E-mail</span></label>
+                </div>
+                <button type="submit" class="btn-neon send">Enviar mensaje <i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="container footer-in">
+            <div class="social">
+                <a href="https://www.facebook.com/omitar.angelloaiza.1" target="_blank" rel="noopener"
+                    aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.instagram.com/omitarangel/" target="_blank" rel="noopener"
+                    aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.linkedin.com/in/omar-angel-loaiza-139517144/" target="_blank" rel="noopener"
+                    aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+            <p class="muted">Copyright © Ratimo Design - 2022 · Manizales, Colombia</p>
+        </div>
+    </footer>
+
+    <a class="wa-float"
+        href="https://api.whatsapp.com/send?phone=573106598981&text=¡Hola Omar, me gustó tu portafolio y deseo obtener más información de tus servicios!"
+        target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+
+</body>
+
+</html>
