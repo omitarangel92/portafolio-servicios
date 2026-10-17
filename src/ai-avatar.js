@@ -5,13 +5,12 @@ const SILENCE_DURATION_MS = 1100;
 const AUDIO_MIME_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
 
 export function initInteractiveAvatar() {
-    const avatarCard = document.getElementById("talking-avatar-card");
     const response = document.getElementById("avatar-response");
     const status = document.getElementById("avatar-status");
     const micButton = document.getElementById("avatar-mic");
     const stopButton = document.getElementById("avatar-stop");
 
-    if (!avatarCard || !response || !status || !micButton || !stopButton) {
+    if (!response || !status || !micButton || !stopButton) {
         return;
     }
 
@@ -53,7 +52,6 @@ export function initInteractiveAvatar() {
         if (synth) {
             synth.cancel();
         }
-        avatarCard.classList.remove("avatar-animating-talk", "avatar-mouth-moving");
         if (busy) {
             resumeListening();
         }
@@ -71,27 +69,12 @@ export function initInteractiveAvatar() {
         utterance.lang = "es-CO";
         utterance.rate = 0.96;
         utterance.onstart = () => {
-            avatarCard.classList.add("avatar-animating-talk");
             setStatus("El avatar está respondiendo...");
         };
-        utterance.onboundary = (event) => {
-            if (event.name !== "word" && typeof event.charLength !== "number") {
-                return;
-            }
-
-            avatarCard.classList.remove("avatar-mouth-moving");
-            avatarCard.style.setProperty(
-                "--avatar-mouth-duration",
-                `${Math.min(600, Math.max(140, (event.charLength || 3) * 65))}ms`
-            );
-            requestAnimationFrame(() => avatarCard.classList.add("avatar-mouth-moving"));
-        };
         utterance.onend = () => {
-            avatarCard.classList.remove("avatar-animating-talk", "avatar-mouth-moving");
             resumeListening();
         };
         utterance.onerror = () => {
-            avatarCard.classList.remove("avatar-animating-talk", "avatar-mouth-moving");
             resumeListening();
             setStatus("No se pudo reproducir la respuesta. Te escucho de nuevo.");
         };
