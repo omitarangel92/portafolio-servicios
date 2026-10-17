@@ -33,6 +33,6 @@ El Worker acepta preguntas de texto de hasta 1000 caracteres y audio de hasta ap
 
 ## Información personal y voz propia
 
-El asistente no necesita reentrenar un modelo: su perfil se define en `SYSTEM_PROMPT`. Para respuestas fiables, amplía ese perfil con una biografía aprobada, servicios, proyectos, experiencia y respuestas a preguntas frecuentes. Incluye solo información que quieras publicar y evita datos privados o sensibles.
+El asistente no necesita reentrenar un modelo: su perfil se define en `SYSTEM_PROMPT`. Contiene la información laboral y educativa publicada en el portafolio, además de los datos personales que Omar autorizó que el avatar comparta si se los preguntan. No se añade una biografía visible a la página. Como el chatbot es público, cualquier dato incluido en ese perfil puede ser revelado por sus respuestas; evita añadir información sensible.
 
 La voz actual es la voz española instalada en el navegador; no clona la voz de Omar. Para usar una voz clonada se necesita un proveedor de síntesis con clonación, muestras de voz con permiso y una API que se invoque desde el Worker. Confirma sus condiciones, precios y tratamiento de las grabaciones antes de elegirlo; nunca expongas su clave en el JavaScript del sitio.
