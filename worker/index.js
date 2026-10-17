@@ -109,7 +109,7 @@ export default {
 
         try {
             const apiResponse = await fetch(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
                 {
                     method: "POST",
                     headers: {
@@ -130,9 +130,19 @@ export default {
 
             if (!apiResponse.ok) {
                 const providerError = await apiResponse.text();
+                let providerMessage = "";
+                try {
+                    providerMessage = JSON.parse(providerError)?.error?.message || "";
+                } catch {
+                    providerMessage = "";
+                }
+                providerMessage = (providerMessage || providerError)
+                    .replaceAll(env.GEMINI_API_KEY, "[redacted]")
+                    .replace(/\s+/g, " ")
+                    .slice(0, 240);
                 console.error("Gemini request failed", {
                     status: apiResponse.status,
-                    detail: providerError.slice(0, 500).replaceAll(env.GEMINI_API_KEY, "[redacted]")
+                    detail: providerMessage || providerError.slice(0, 500).replaceAll(env.GEMINI_API_KEY, "[redacted]")
                 });
                 const error = apiResponse.status === 400
                     ? "Gemini rechazó la solicitud. Revisa el modelo o la configuración del Worker."
@@ -140,7 +150,9 @@ export default {
                         ? "Gemini rechazó la clave de API. Guarda una clave válida en el Worker."
                         : apiResponse.status === 429
                             ? "Se alcanzó el límite de uso de Gemini. Intenta de nuevo más tarde."
-                            : "El servicio de IA no pudo responder. Intenta de nuevo más tarde.";
+                            : apiResponse.status === 404
+                                ? `Gemini respondió 404: ${providerMessage || "no encontró el modelo para esta clave."}`
+                                : "Gemini no está disponible en este momento. Intenta de nuevo más tarde.";
                 return jsonResponse({
                     error
                 }, 502, origin);
@@ -157,9 +169,12 @@ export default {
             }
 
             return jsonResponse({ reply }, 200, origin);
-        } catch {
+        } catch (error) {
+            console.error("Gemini connection failed", error instanceof Error ? error.name : "UnknownError");
             return jsonResponse({
-                error: "No fue posible conectar con Gemini. Intenta de nuevo más tarde."
+                error: error instanceof Error && error.name === "AbortError"
+                    ? "Gemini tardó demasiado en responder. Intenta de nuevo."
+                    : "Cloudflare no pudo conectar con Gemini. Revisa el servicio y vuelve a intentarlo."
             }, 502, origin);
         } finally {
             clearTimeout(timeout);

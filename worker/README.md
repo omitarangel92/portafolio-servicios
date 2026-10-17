@@ -1,6 +1,7 @@
 # Asistente del portafolio
 
 El sitio de GitHub Pages no debe contener la clave de Gemini. Este Worker la conserva como secreto y devuelve las respuestas al avatar.
+El Worker usa `gemini-3.8-flash` mediante la API `generateContent`.
 
 ## Despliegue
 
