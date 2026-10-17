@@ -119,7 +119,7 @@ export function initInteractiveAvatar() {
         setStatus("Estoy preparando una respuesta...");
 
         if (!AI_ENDPOINT) {
-            const message = "Te escuché, pero no pude conectar con el asistente. Revisa la configuración del servicio e inténtalo de nuevo.";
+            const message = "Te escuché, pero todavía no tengo conexión con la inteligencia artificial. Falta configurar y publicar el servicio Gemini del portafolio.";
             response.textContent = message;
             speak(message);
             return;

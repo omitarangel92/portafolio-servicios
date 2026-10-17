@@ -94,36 +94,35 @@ export default {
             return jsonResponse({ error: "El historial de conversación no es válido." }, 400, origin);
         }
 
-        if (!env.GROK_API_KEY) {
-            return jsonResponse({ error: "Falta configurar la clave de xAI en el Worker." }, 503, origin);
+        if (!env.GEMINI_API_KEY) {
+            return jsonResponse({ error: "Falta configurar la clave de Gemini en el Worker." }, 503, origin);
         }
 
-        const messages = [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...history.map((item) => ({
-                role: item.role === "model" ? "assistant" : "user",
-                content: item.text.trim()
-            })),
-            { role: "user", content: message }
-        ];
+        const contents = history.map((item) => ({
+            role: item.role,
+            parts: [{ text: item.text.trim() }]
+        }));
+        contents.push({ role: "user", parts: [{ text: message }] });
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 20000);
 
         try {
             const apiResponse = await fetch(
-                "https://api.x.ai/v1/chat/completions",
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${env.GROK_API_KEY}`
+                        "x-goog-api-key": env.GEMINI_API_KEY
                     },
                     body: JSON.stringify({
-                        model: "grok-3-mini",
-                        messages,
-                        temperature: 0.5,
-                        max_tokens: 220
+                        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                        contents,
+                        generationConfig: {
+                            temperature: 0.5,
+                            maxOutputTokens: 220
+                        }
                     }),
                     signal: controller.signal
                 }
@@ -138,29 +137,32 @@ export default {
                     providerMessage = "";
                 }
                 providerMessage = (providerMessage || providerError)
-                    .replaceAll(env.GROK_API_KEY, "[redacted]")
+                    .replaceAll(env.GEMINI_API_KEY, "[redacted]")
                     .replace(/\s+/g, " ")
                     .slice(0, 240);
-                console.error("xAI request failed", {
+                console.error("Gemini request failed", {
                     status: apiResponse.status,
-                    detail: providerMessage || providerError.slice(0, 500).replaceAll(env.GROK_API_KEY, "[redacted]")
+                    detail: providerMessage || providerError.slice(0, 500).replaceAll(env.GEMINI_API_KEY, "[redacted]")
                 });
                 const error = apiResponse.status === 400
-                    ? "Grok rechazó la solicitud. Revisa el modelo o la configuración del Worker."
+                    ? "Gemini rechazó la solicitud. Revisa el modelo o la configuración del Worker."
                     : apiResponse.status === 401 || apiResponse.status === 403
-                        ? "xAI rechazó la clave de API. Guarda una clave válida en el Worker."
+                        ? "Gemini rechazó la clave de API. Guarda una clave válida en el Worker."
                         : apiResponse.status === 429
-                            ? "Se alcanzó el límite de uso de xAI. Intenta de nuevo más tarde."
+                            ? "Se alcanzó el límite de uso de Gemini. Intenta de nuevo más tarde."
                             : apiResponse.status === 404
-                                ? `xAI respondió 404: ${providerMessage || "no encontró el modelo para esta clave."}`
-                                : "Grok no está disponible en este momento. Intenta de nuevo más tarde.";
+                                ? `Gemini respondió 404: ${providerMessage || "no encontró el modelo para esta clave."}`
+                                : "Gemini no está disponible en este momento. Intenta de nuevo más tarde.";
                 return jsonResponse({
                     error
                 }, 502, origin);
             }
 
             const result = await apiResponse.json();
-            const reply = result.choices?.[0]?.message?.content?.trim();
+            const reply = result.candidates?.[0]?.content?.parts
+                ?.map((part) => part.text || "")
+                .join("")
+                .trim();
 
             if (!reply) {
                 return jsonResponse({ error: "La IA devolvió una respuesta vacía." }, 502, origin);
@@ -168,11 +170,11 @@ export default {
 
             return jsonResponse({ reply }, 200, origin);
         } catch (error) {
-            console.error("xAI connection failed", error instanceof Error ? error.name : "UnknownError");
+            console.error("Gemini connection failed", error instanceof Error ? error.name : "UnknownError");
             return jsonResponse({
                 error: error instanceof Error && error.name === "AbortError"
-                    ? "Grok tardó demasiado en responder. Intenta de nuevo."
-                    : "Cloudflare no pudo conectar con xAI. Revisa el servicio y vuelve a intentarlo."
+                    ? "Gemini tardó demasiado en responder. Intenta de nuevo."
+                    : "Cloudflare no pudo conectar con Gemini. Revisa el servicio y vuelve a intentarlo."
             }, 502, origin);
         } finally {
             clearTimeout(timeout);
