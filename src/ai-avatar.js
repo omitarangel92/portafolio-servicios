@@ -1,7 +1,7 @@
 const AI_ENDPOINT = "https://ratimo-portfolio-avatar.ratimo-design-omar92.workers.dev";
 const MAX_QUESTION_LENGTH = 1000;
 const MAX_RECORDING_MS = 15000;
-const SILENCE_DURATION_MS = 1100;
+const SILENCE_DURATION_MS = 850;
 const AUDIO_MIME_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
 
 export function initInteractiveAvatar() {
@@ -137,7 +137,7 @@ export function initInteractiveAvatar() {
         }
     };
 
-    const transcribeRecording = async (blob) => {
+    const answerRecording = async (blob) => {
         if (!AI_ENDPOINT) {
             throw new Error("Falta configurar el servicio Gemini del portafolio.");
         }
@@ -159,17 +159,21 @@ export function initInteractiveAvatar() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 audio: dataUrl.slice(separatorIndex + 1),
-                mimeType
+                mimeType,
+                history: conversation.slice(-8)
             })
         });
         const data = await apiResponse.json();
         if (!apiResponse.ok) {
-            throw new Error(data.error || "Gemini no pudo transcribir el audio.");
+            throw new Error(data.error || "Gemini no pudo procesar el audio.");
         }
         if (typeof data.transcript !== "string" || !data.transcript.trim()) {
             throw new Error("No se reconocieron palabras. Intenta hablar más cerca del micrófono.");
         }
-        return data.transcript.trim();
+        if (typeof data.reply !== "string" || !data.reply.trim()) {
+            throw new Error("Gemini no devolvió una respuesta. Intenta de nuevo.");
+        }
+        return { transcript: data.transcript.trim(), reply: data.reply.trim() };
     };
 
     const handleRecording = async (blob) => {
@@ -179,10 +183,16 @@ export function initInteractiveAvatar() {
         }
 
         busy = true;
-        setStatus("Entendiendo lo que dijiste...");
+        setStatus("Entendiendo tu pregunta y preparando una respuesta...");
         try {
-            const transcript = await transcribeRecording(blob);
-            await sendQuestion(transcript);
+            const { transcript, reply } = await answerRecording(blob);
+            response.textContent = reply;
+            conversation.push(
+                { role: "user", text: transcript },
+                { role: "model", text: reply }
+            );
+            conversation.splice(0, Math.max(0, conversation.length - 12));
+            speak(reply);
         } catch (error) {
             const message = error instanceof TypeError
                 ? "No se pudo enviar el audio al asistente. Revisa la conexión e inténtalo de nuevo."

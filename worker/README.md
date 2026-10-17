@@ -25,8 +25,14 @@ La clave solo se introduce en el prompt de Wrangler; nunca la pegues en el HTML,
 
 ## Voz y avatar
 
-Al abrir el sitio se solicita permiso al micrófono y comienza la escucha. El navegador graba cada frase cuando detecta voz y la envía al Worker; Gemini la transcribe y el sitio solicita la respuesta conversacional. Así no depende del servicio de reconocimiento de voz del navegador. El visitante puede pausar y reanudar el micrófono con el botón del avatar. Si se deniega el permiso, habrá que habilitarlo en la configuración del navegador y pulsar «Activar micrófono». No hay entrada de texto.
+Al abrir el sitio se solicita permiso al micrófono y comienza la escucha. El navegador graba cada frase cuando detecta voz y la envía al Worker; Gemini la transcribe y genera la respuesta en una sola solicitud. Así no depende del servicio de reconocimiento de voz del navegador y evita una llamada adicional por pregunta. El visitante puede pausar y reanudar el micrófono con el botón del avatar. Si se deniega el permiso, habrá que habilitarlo en la configuración del navegador y pulsar «Activar micrófono». No hay entrada de texto.
 
 El retrato se mantiene estático mientras el sintetizador reproduce las respuestas. Para animación 2D, prepara la imagen en capas y rige un personaje con Live2D Cubism o Rive; una imagen PNG plana no permite un movimiento de boca natural. Los servicios de avatar en video pueden animar un retrato, pero suelen cobrar por uso.
 
-El Worker acepta preguntas de texto de hasta 1000 caracteres y audio de hasta aproximadamente 1 MB. Cada fragmento de voz se envía a Gemini para transcripción antes de generar la respuesta; revisa el consumo y los límites de uso de Gemini en Google AI Studio.
+El Worker acepta preguntas de texto de hasta 1000 caracteres y audio de hasta aproximadamente 1 MB. Si Gemini responde HTTP 429, se agotó una cuota del proyecto (por ejemplo, solicitudes por minuto o por día); comprueba la cuota y el modelo habilitado para la clave en Google AI Studio. Reducir llamadas ayuda, pero no elimina esos límites.
+
+## Información personal y voz propia
+
+El asistente no necesita reentrenar un modelo: su perfil se define en `SYSTEM_PROMPT`. Para respuestas fiables, amplía ese perfil con una biografía aprobada, servicios, proyectos, experiencia y respuestas a preguntas frecuentes. Incluye solo información que quieras publicar y evita datos privados o sensibles.
+
+La voz actual es la voz española instalada en el navegador; no clona la voz de Omar. Para usar una voz clonada se necesita un proveedor de síntesis con clonación, muestras de voz con permiso y una API que se invoque desde el Worker. Confirma sus condiciones, precios y tratamiento de las grabaciones antes de elegirlo; nunca expongas su clave en el JavaScript del sitio.

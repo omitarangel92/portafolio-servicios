@@ -109,13 +109,20 @@ export default {
                 return jsonResponse({ error: "El audio no es válido o supera el tamaño permitido." }, 400, origin);
             }
 
-            contents = [{
+            const historyContents = history.map((item) => ({
+                role: item.role,
+                parts: [{ text: item.text.trim() }]
+            }));
+            historyContents.push({
                 role: "user",
                 parts: [
-                    { text: "Transcribe con exactitud las palabras habladas en español. Devuelve solo la transcripción, sin explicaciones. Si no hay voz comprensible, devuelve una cadena vacía." },
+                    {
+                        text: "Escucha el audio del visitante. Identifica la pregunta en español y responde como asistente del portafolio. Devuelve un JSON con transcript (transcripción exacta) y reply (respuesta breve, natural y útil en español). Si no se entiende el audio, deja transcript vacío y explica brevemente el problema en reply."
+                    },
                     { inline_data: { mime_type: mimeType, data: audio } }
                 ]
-            }];
+            });
+            contents = historyContents;
         } else {
             const message = typeof body?.message === "string" ? body.message.trim() : "";
             if (!message || message.length > MAX_MESSAGE_LENGTH) {
@@ -152,7 +159,18 @@ export default {
                         contents,
                         generationConfig: {
                             temperature: 0.5,
-                            maxOutputTokens: 220
+                            maxOutputTokens: isAudioRequest ? 360 : 220,
+                            ...(isAudioRequest ? {
+                                responseMimeType: "application/json",
+                                responseSchema: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        transcript: { type: "STRING" },
+                                        reply: { type: "STRING" }
+                                    },
+                                    required: ["transcript", "reply"]
+                                }
+                            } : {})
                         }
                     }),
                     signal: controller.signal
@@ -180,7 +198,7 @@ export default {
                     : apiResponse.status === 401 || apiResponse.status === 403
                         ? "Gemini rechazó la clave de API. Guarda una clave válida en el Worker."
                         : apiResponse.status === 429
-                            ? "Se alcanzó el límite de uso de Gemini. Intenta de nuevo más tarde."
+                            ? "Se alcanzó la cuota o el límite de solicitudes de Gemini. Revisa los límites del proyecto en Google AI Studio o inténtalo cuando se restablezcan."
                             : apiResponse.status === 404
                                 ? `Gemini respondió 404: ${providerMessage || "no encontró el modelo para esta clave."}`
                                 : "Gemini no está disponible en este momento. Intenta de nuevo más tarde.";
@@ -190,12 +208,12 @@ export default {
             }
 
             const result = await apiResponse.json();
-            const reply = result.candidates?.[0]?.content?.parts
+            const responseText = result.candidates?.[0]?.content?.parts
                 ?.map((part) => part.text || "")
                 .join("")
                 .trim();
 
-            if (!reply) {
+            if (!responseText) {
                 return jsonResponse({
                     error: isAudioRequest
                         ? "No detecté palabras claras. Intenta hablar un poco más cerca del micrófono."
@@ -204,9 +222,24 @@ export default {
             }
 
             if (isAudioRequest) {
-                return jsonResponse({ transcript: reply }, 200, origin);
+                let audioResult;
+                try {
+                    audioResult = JSON.parse(responseText);
+                } catch {
+                    console.error("Gemini returned invalid audio response JSON");
+                    return jsonResponse({ error: "Gemini no devolvió una respuesta de voz válida. Intenta de nuevo." }, 502, origin);
+                }
+                const transcript = typeof audioResult.transcript === "string" ? audioResult.transcript.trim() : "";
+                const reply = typeof audioResult.reply === "string" ? audioResult.reply.trim() : "";
+                if (!transcript || !reply) {
+                    return jsonResponse({
+                        error: reply || "No entendí la pregunta. Intenta hablar más cerca del micrófono."
+                    }, 422, origin);
+                }
+                return jsonResponse({ transcript, reply }, 200, origin);
             }
 
+            const reply = responseText;
             return jsonResponse({ reply }, 200, origin);
         } catch (error) {
             console.error("Gemini connection failed", error instanceof Error ? error.name : "UnknownError");
