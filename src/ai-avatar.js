@@ -1,8 +1,9 @@
 const AI_ENDPOINT = "https://ratimo-portfolio-avatar.ratimo-design-omar92.workers.dev";
 const MAX_QUESTION_LENGTH = 1000;
 const MAX_RECORDING_MS = 15000;
-const SILENCE_DURATION_MS = 850;
+const SILENCE_DURATION_MS = 520;
 const AUDIO_MIME_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+const GREETING = "Hola, soy Ómar. Si quieres preguntar algo, solo dilo y yo te respondo.";
 
 export function initInteractiveAvatar() {
     const response = document.getElementById("avatar-response");
@@ -27,8 +28,10 @@ export function initInteractiveAvatar() {
     let silenceStartedAt = 0;
     let voiceFrames = 0;
     let recordingTimer;
+    let greetingTimer;
+    let greetingPending = true;
     const discardedRecorders = new WeakSet();
-    let noiseFloor = 0.005;
+    let noiseFloor = 0.003;
 
     const setStatus = (message) => {
         status.textContent = message;
@@ -43,8 +46,10 @@ export function initInteractiveAvatar() {
 
     const resumeListening = (statusMessage) => {
         busy = false;
-        if (listening) {
-            setStatus(statusMessage || "Respuesta terminada. Te escucho...");
+        if (statusMessage) {
+            setStatus(statusMessage);
+        } else if (listening) {
+            setStatus("Respuesta terminada. Te escucho...");
         }
     };
 
@@ -57,29 +62,58 @@ export function initInteractiveAvatar() {
         }
     };
 
-    const speak = (text) => {
+    const speak = (text, isGreeting = false) => {
         if (!synth || typeof window.SpeechSynthesisUtterance !== "function") {
             response.textContent = text;
             resumeListening();
+            if (isGreeting) {
+                greetingPending = true;
+            }
             setStatus("La voz no está disponible; la respuesta quedó escrita arriba.");
             return;
         }
 
+        busy = true;
         const utterance = new window.SpeechSynthesisUtterance(text);
         utterance.lang = "es-CO";
-        utterance.rate = 0.96;
+        utterance.rate = 1.02;
+        const voices = synth.getVoices();
+        utterance.voice = voices.find((voice) => /^es-CO$/i.test(voice.lang))
+            || voices.find((voice) => /^es-(MX|US|419)$/i.test(voice.lang))
+            || voices.find((voice) => /^es-/i.test(voice.lang));
         utterance.onstart = () => {
-            setStatus("El avatar está respondiendo...");
+            window.clearTimeout(greetingTimer);
+            if (isGreeting) {
+                greetingPending = false;
+            }
+            setStatus(isGreeting ? GREETING : "El avatar está respondiendo...");
         };
         utterance.onend = () => {
-            resumeListening();
+            window.clearTimeout(greetingTimer);
+            if (isGreeting) {
+                greetingPending = false;
+            }
+            resumeListening(isGreeting
+                ? (listening ? "Te escucho. Haz tu pregunta en voz alta." : "Activa el micrófono para conversar conmigo.")
+                : undefined);
         };
         utterance.onerror = () => {
-            resumeListening();
-            setStatus("No se pudo reproducir la respuesta. Te escucho de nuevo.");
+            window.clearTimeout(greetingTimer);
+            if (isGreeting) {
+                greetingPending = true;
+            }
+            resumeListening(isGreeting
+                ? `${GREETING} Toca el micrófono si no alcanzaste a oírme.`
+                : "No se pudo reproducir la respuesta. Te escucho de nuevo.");
         };
         synth.cancel();
         synth.speak(utterance);
+        if (isGreeting) {
+            greetingTimer = window.setTimeout(() => {
+                greetingPending = true;
+                resumeListening("Hola, soy Ómar. Si no escuchaste mi saludo, toca el micrófono para hablar conmigo.");
+            }, 6000);
+        }
     };
 
     const sendQuestion = async (question) => {
@@ -106,7 +140,7 @@ export function initInteractiveAvatar() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: cleanQuestion,
-                    history: conversation.slice(-8)
+                    history: conversation.slice(-4)
                 })
             });
             const data = await apiResponse.json();
@@ -160,7 +194,7 @@ export function initInteractiveAvatar() {
             body: JSON.stringify({
                 audio: dataUrl.slice(separatorIndex + 1),
                 mimeType,
-                history: conversation.slice(-8)
+                history: conversation.slice(-4)
             })
         });
         const data = await apiResponse.json();
@@ -277,7 +311,7 @@ export function initInteractiveAvatar() {
 
         if (!recorder && !busy) {
             noiseFloor = noiseFloor * 0.96 + Math.min(volume, 0.02) * 0.04;
-            if (volume > Math.max(0.018, noiseFloor * 3)) {
+            if (volume > Math.max(0.006, noiseFloor * 1.8)) {
                 voiceFrames += 1;
                 if (voiceFrames >= 3) {
                     beginRecording();
@@ -286,7 +320,7 @@ export function initInteractiveAvatar() {
                 voiceFrames = 0;
             }
         } else if (recorder?.state === "recording" && !busy) {
-            if (volume > Math.max(0.014, noiseFloor * 2.4)) {
+            if (volume > Math.max(0.005, noiseFloor * 1.6)) {
                 silenceStartedAt = 0;
             } else if (!silenceStartedAt) {
                 silenceStartedAt = now;
@@ -330,7 +364,13 @@ export function initInteractiveAvatar() {
         setStatus("Solicitando permiso para usar el micrófono...");
 
         try {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    autoGainControl: true,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
+            });
             if (!listening) {
                 mediaStream.getTracks().forEach((track) => track.stop());
                 mediaStream = null;
@@ -346,7 +386,7 @@ export function initInteractiveAvatar() {
             analyser = audioContext.createAnalyser();
             analyser.fftSize = 512;
             audioContext.createMediaStreamSource(mediaStream).connect(analyser);
-            setStatus("Permiso concedido. Te escucho...");
+            setStatus(busy ? GREETING : "Permiso concedido. Te escucho...");
             monitorMicrophone();
         } catch (error) {
             releaseMicrophone();
@@ -362,12 +402,19 @@ export function initInteractiveAvatar() {
 
     micButton.addEventListener("click", () => {
         if (listening) {
+            if (greetingPending) {
+                speak(GREETING, true);
+                return;
+            }
             listening = false;
             releaseMicrophone();
             stopSpeaking();
             updateMicButton();
             setStatus("Micrófono pausado.");
             return;
+        }
+        if (greetingPending) {
+            speak(GREETING, true);
         }
         void startConversation();
     });
@@ -380,4 +427,6 @@ export function initInteractiveAvatar() {
     });
 
     void startConversation();
+    response.textContent = GREETING;
+    speak(GREETING, true);
 }

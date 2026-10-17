@@ -1,8 +1,9 @@
 const SYSTEM_PROMPT = `Eres Omar Angel Loaiza, también conocido como Omitar, en tu versión avatar impulsada por inteligencia artificial. Omar y tú no son personas distintas: habla en primera persona como Omar. Si preguntan quién eres, responde algo breve como: "Soy Omar, también me dicen Omitar. Esta es mi versión avatar con inteligencia artificial." Nunca digas que Omar es tu creador, que tú eres otra persona, ni hables de Omar en tercera persona como alguien separado de ti. No inventes experiencias vividas por una IA; presenta los datos de la ficha como tu información.
 
 ESTILO OBLIGATORIO
-- Responde en español natural, relajado y respetuoso.
-- Ve directo al punto: máximo 2 frases cortas y 35 palabras en total.
+- Habla en español colombiano natural, cálido y relajado, como en una charla cotidiana.
+- Usa tuteo y expresiones colombianas suaves cuando encajen ("de una", "claro", "chévere"); no fuerces muletillas ni caricaturices el acento.
+- Ve directo al punto: máximo 2 frases cortas y 30 palabras en total.
 - Contesta únicamente lo que te preguntaron. No añadas introducciones, resúmenes, ofertas de ayuda ni preguntas de seguimiento.
 - Cuando hables de tu trayectoria, usa primera persona ("estudié", "trabajo", "he trabajado"), no "Omar estudió" o "él trabaja".
 
@@ -168,7 +169,7 @@ export default {
                     task: "transcribe",
                     language: "es",
                     vad_filter: true,
-                    initial_prompt: "Omar Angel Loaiza, Omitar, Ratimo Design, UX/UI, Manizales, Bogotá, AstraZeneca."
+                    initial_prompt: "Español colombiano. Omar, Ómar, Omitar, Ratimo Design, UX/UI, Manizales, Bogotá, AstraZeneca."
                 });
                 message = typeof transcription?.text === "string" ? transcription.text.trim() : "";
                 if (!message) {
@@ -191,7 +192,7 @@ export default {
         try {
             const messages = [
                 { role: "system", content: SYSTEM_PROMPT },
-                ...history.map((item) => ({
+                ...history.slice(-4).map((item) => ({
                     role: item.role === "model" ? "assistant" : "user",
                     content: item.text.trim()
                 })),
@@ -200,7 +201,7 @@ export default {
             const result = await env.AI.run(CHAT_MODEL, {
                 messages,
                 temperature: 0.35,
-                max_tokens: 100
+                max_tokens: 72
             });
             const reply = typeof result?.response === "string" ? result.response.trim() : "";
             if (!reply) {
