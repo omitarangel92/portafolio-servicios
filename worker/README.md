@@ -21,6 +21,8 @@ Al abrir el sitio se solicita permiso al micrófono y comienza la escucha. El na
 
 El retrato se mantiene estático mientras el sintetizador reproduce las respuestas. Para animación 2D, prepara la imagen en capas y rige un personaje con Live2D Cubism o Rive; una imagen PNG plana no permite un movimiento de boca natural. Los servicios de avatar en video pueden animar un retrato, pero suelen cobrar por uso.
 
+El texto de las respuestas permanece oculto visualmente, aunque accesible para lectores de pantalla. La voz habla en primera persona como Omar y se limita a respuestas breves (máximo dos frases y 35 palabras).
+
 El Worker acepta preguntas de texto de hasta 1000 caracteres y audio de hasta aproximadamente 1 MB. Cloudflare documenta una asignación gratuita de Workers AI de 10.000 Neurons por día en los planes Free y Paid, compartida entre los usos de Workers AI de la cuenta y reiniciada a las 00:00 UTC. No es ilimitada: si se consume, las solicitudes fallan hasta el siguiente reinicio. Consulta el uso en el panel de Workers AI y los límites por tarea en la documentación oficial. Whisper se cobra por minuto de audio y Llama por tokens; el consumo de cada conversación depende de su duración y tokens de entrada/salida.
 
 ## Información personal y voz propia
