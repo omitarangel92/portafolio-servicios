@@ -27,6 +27,6 @@ La clave solo se introduce en el prompt de Wrangler; nunca la pegues en el HTML,
 
 Al abrir el sitio se solicita permiso al micrófono y comienza la escucha. El navegador graba cada frase cuando detecta voz y la envía al Worker; Gemini la transcribe y el sitio solicita la respuesta conversacional. Así no depende del servicio de reconocimiento de voz del navegador. El visitante puede pausar y reanudar el micrófono con el botón del avatar. Si se deniega el permiso, habrá que habilitarlo en la configuración del navegador y pulsar «Activar micrófono». No hay entrada de texto.
 
-La imagen actual es una ilustración fija. La boca superpuesta se anima mientras habla el sintetizador y usa los eventos de voz del navegador para aproximar los movimientos por palabra; no es sincronización labial fonética exacta. Para obtener labios realistas harían falta imágenes con distintas formas de boca o un avatar de video.
+El retrato se mantiene estático mientras el sintetizador reproduce las respuestas. Para animación 2D, prepara la imagen en capas y rige un personaje con Live2D Cubism o Rive; una imagen PNG plana no permite un movimiento de boca natural. Los servicios de avatar en video pueden animar un retrato, pero suelen cobrar por uso.
 
 El Worker acepta preguntas de texto de hasta 1000 caracteres y audio de hasta aproximadamente 1 MB. Cada fragmento de voz se envía a Gemini para transcripción antes de generar la respuesta; revisa el consumo y los límites de uso de Gemini en Google AI Studio.
