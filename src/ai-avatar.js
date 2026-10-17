@@ -1,5 +1,8 @@
 const AI_ENDPOINT = "https://ratimo-portfolio-avatar.ratimo-design-omar92.workers.dev";
 const MAX_QUESTION_LENGTH = 1000;
+const MAX_RECORDING_MS = 15000;
+const SILENCE_DURATION_MS = 1100;
+const AUDIO_MIME_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
 
 export function initInteractiveAvatar() {
     const avatarCard = document.getElementById("talking-avatar-card");
@@ -7,7 +10,6 @@ export function initInteractiveAvatar() {
     const status = document.getElementById("avatar-status");
     const micButton = document.getElementById("avatar-mic");
     const stopButton = document.getElementById("avatar-stop");
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!avatarCard || !response || !status || !micButton || !stopButton) {
         return;
@@ -15,11 +17,19 @@ export function initInteractiveAvatar() {
 
     const synth = window.speechSynthesis;
     const conversation = [];
-    let recognition;
     let listening = false;
-    let recognitionActive = false;
     let busy = false;
-    let restartTimer;
+    let mediaStream;
+    let audioContext;
+    let analyser;
+    let monitorFrame;
+    let recorder;
+    let recordingStartedAt = 0;
+    let silenceStartedAt = 0;
+    let voiceFrames = 0;
+    let recordingTimer;
+    const discardedRecorders = new WeakSet();
+    let noiseFloor = 0.005;
 
     const setStatus = (message) => {
         status.textContent = message;
@@ -32,29 +42,11 @@ export function initInteractiveAvatar() {
             : '<i class="fas fa-microphone" aria-hidden="true"></i> Activar micrófono';
     };
 
-    const scheduleListening = () => {
-        window.clearTimeout(restartTimer);
-        if (!listening || busy || !recognition) {
-            return;
-        }
-
-        restartTimer = window.setTimeout(() => {
-            try {
-                recognition.start();
-            } catch (error) {
-                if (!(error instanceof DOMException && error.name === "InvalidStateError")) {
-                    listening = false;
-                    updateMicButton();
-                    setStatus("No se pudo activar el micrófono. Pulsa «Activar micrófono» para volver a intentarlo.");
-                }
-            }
-        }, 250);
-    };
-
     const resumeListening = () => {
         busy = false;
-        setStatus("Respuesta terminada. Te escucho...");
-        scheduleListening();
+        if (listening) {
+            setStatus("Respuesta terminada. Te escucho...");
+        }
     };
 
     const stopSpeaking = () => {
@@ -107,7 +99,7 @@ export function initInteractiveAvatar() {
         synth.speak(utterance);
     };
 
-    const ask = async (question) => {
+    const sendQuestion = async (question) => {
         const cleanQuestion = question.trim().slice(0, MAX_QUESTION_LENGTH);
         if (!cleanQuestion) {
             resumeListening();
@@ -119,7 +111,7 @@ export function initInteractiveAvatar() {
         setStatus("Estoy preparando una respuesta...");
 
         if (!AI_ENDPOINT) {
-            const message = "Te escuché, pero todavía no tengo conexión con la inteligencia artificial. Falta configurar y publicar el servicio Gemini del portafolio.";
+            const message = "Todavía no hay conexión con la inteligencia artificial. Falta configurar el servicio Gemini del portafolio.";
             response.textContent = message;
             speak(message);
             return;
@@ -162,9 +154,181 @@ export function initInteractiveAvatar() {
         }
     };
 
+    const transcribeRecording = async (blob) => {
+        if (!AI_ENDPOINT) {
+            throw new Error("Falta configurar el servicio Gemini del portafolio.");
+        }
+
+        const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("No se pudo leer el audio grabado."));
+            reader.readAsDataURL(blob);
+        });
+        const separatorIndex = dataUrl.indexOf(",");
+        if (separatorIndex < 0) {
+            throw new Error("El formato del audio grabado no es válido.");
+        }
+
+        const mimeType = blob.type.split(";")[0].toLowerCase();
+        const apiResponse = await fetch(AI_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                audio: dataUrl.slice(separatorIndex + 1),
+                mimeType
+            })
+        });
+        const data = await apiResponse.json();
+        if (!apiResponse.ok) {
+            throw new Error(data.error || "Gemini no pudo transcribir el audio.");
+        }
+        if (typeof data.transcript !== "string" || !data.transcript.trim()) {
+            throw new Error("No se reconocieron palabras. Intenta hablar más cerca del micrófono.");
+        }
+        return data.transcript.trim();
+    };
+
+    const handleRecording = async (blob) => {
+        if (blob.size === 0) {
+            resumeListening();
+            return;
+        }
+
+        busy = true;
+        setStatus("Entendiendo lo que dijiste...");
+        try {
+            const transcript = await transcribeRecording(blob);
+            await sendQuestion(transcript);
+        } catch (error) {
+            const message = error instanceof TypeError
+                ? "No se pudo enviar el audio al asistente. Revisa la conexión e inténtalo de nuevo."
+                : error instanceof Error
+                    ? error.message
+                    : "No se pudo procesar el audio. Intenta de nuevo.";
+            response.textContent = message;
+            speak(message);
+        }
+    };
+
+    const stopRecording = () => {
+        window.clearTimeout(recordingTimer);
+        silenceStartedAt = 0;
+        if (recorder?.state === "recording") {
+            recorder.stop();
+        }
+    };
+
+    const beginRecording = () => {
+        if (!mediaStream || recorder || busy) {
+            return;
+        }
+
+        const mimeType = AUDIO_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
+        if (!mimeType && !MediaRecorder.isTypeSupported("")) {
+            listening = false;
+            updateMicButton();
+            setStatus("Este navegador no puede grabar audio. Prueba Chrome o Edge actualizado.");
+            return;
+        }
+
+        try {
+            const currentRecorder = mimeType
+                ? new MediaRecorder(mediaStream, { mimeType })
+                : new MediaRecorder(mediaStream);
+            const currentChunks = [];
+            recorder = currentRecorder;
+            currentRecorder.addEventListener("dataavailable", (event) => {
+                if (event.data.size > 0) {
+                    currentChunks.push(event.data);
+                }
+            });
+            currentRecorder.addEventListener("stop", () => {
+                if (recorder === currentRecorder) {
+                    recorder = null;
+                }
+                window.clearTimeout(recordingTimer);
+
+                const blob = new Blob(currentChunks, { type: currentRecorder.mimeType });
+                if (discardedRecorders.has(currentRecorder) || !listening) {
+                    return;
+                }
+                void handleRecording(blob);
+            }, { once: true });
+            currentRecorder.start();
+            recordingStartedAt = performance.now();
+            setStatus("Te escucho. Termina tu pregunta para que pueda responder.");
+            recordingTimer = window.setTimeout(stopRecording, MAX_RECORDING_MS);
+        } catch {
+            recorder = null;
+            listening = false;
+            updateMicButton();
+            setStatus("No se pudo grabar el audio. Revisa los permisos del micrófono e inténtalo de nuevo.");
+        }
+    };
+
+    const monitorMicrophone = () => {
+        if (!listening || !analyser) {
+            return;
+        }
+
+        const samples = new Uint8Array(analyser.fftSize);
+        analyser.getByteTimeDomainData(samples);
+        let sumSquares = 0;
+        for (const sample of samples) {
+            const normalized = (sample - 128) / 128;
+            sumSquares += normalized * normalized;
+        }
+        const volume = Math.sqrt(sumSquares / samples.length);
+        const now = performance.now();
+
+        if (!recorder && !busy) {
+            noiseFloor = noiseFloor * 0.96 + Math.min(volume, 0.02) * 0.04;
+            if (volume > Math.max(0.018, noiseFloor * 3)) {
+                voiceFrames += 1;
+                if (voiceFrames >= 3) {
+                    beginRecording();
+                }
+            } else {
+                voiceFrames = 0;
+            }
+        } else if (recorder?.state === "recording" && !busy) {
+            if (volume > Math.max(0.014, noiseFloor * 2.4)) {
+                silenceStartedAt = 0;
+            } else if (!silenceStartedAt) {
+                silenceStartedAt = now;
+            } else if (now - silenceStartedAt >= SILENCE_DURATION_MS) {
+                if (now - recordingStartedAt > 350) {
+                    stopRecording();
+                } else {
+                    silenceStartedAt = 0;
+                }
+            }
+        }
+
+        monitorFrame = requestAnimationFrame(monitorMicrophone);
+    };
+
+    const releaseMicrophone = () => {
+        window.cancelAnimationFrame(monitorFrame);
+        window.clearTimeout(recordingTimer);
+        if (recorder?.state === "recording") {
+            discardedRecorders.add(recorder);
+            recorder.stop();
+        }
+        recorder = null;
+        mediaStream?.getTracks().forEach((track) => track.stop());
+        mediaStream = null;
+        if (audioContext && audioContext.state !== "closed") {
+            void audioContext.close();
+        }
+        audioContext = null;
+        analyser = null;
+    };
+
     const startConversation = async () => {
-        if (!recognition) {
-            setStatus("Este navegador no admite reconocimiento de voz. Prueba la página en Chrome o Edge actualizado.");
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder !== "function") {
+            setStatus("Este navegador no permite grabar desde el micrófono. Prueba Chrome o Edge actualizado.");
             return;
         }
 
@@ -173,101 +337,46 @@ export function initInteractiveAvatar() {
         setStatus("Solicitando permiso para usar el micrófono...");
 
         try {
-            if (!navigator.mediaDevices?.getUserMedia) {
-                scheduleListening();
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            if (!listening) {
+                mediaStream.getTracks().forEach((track) => track.stop());
+                mediaStream = null;
                 return;
             }
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach((track) => track.stop());
-            if (listening) {
-                setStatus("Permiso concedido. Te escucho...");
-                scheduleListening();
+
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) {
+                throw new Error("Este navegador no admite procesamiento de audio.");
             }
+            audioContext = new AudioContextClass();
+            await audioContext.resume();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 512;
+            audioContext.createMediaStreamSource(mediaStream).connect(analyser);
+            setStatus("Permiso concedido. Te escucho...");
+            monitorMicrophone();
         } catch (error) {
+            releaseMicrophone();
             listening = false;
             updateMicButton();
             setStatus(error instanceof DOMException && error.name === "NotAllowedError"
                 ? "No se concedió permiso para el micrófono. Actívalo en el navegador y pulsa «Activar micrófono»."
-                : "No se pudo acceder al micrófono. Revisa la conexión y los permisos del navegador.");
-        }
-    };
-
-    if (!SpeechRecognition) {
-        micButton.disabled = true;
-        setStatus("Este navegador no admite reconocimiento de voz. Prueba la página en Chrome o Edge actualizado.");
-        return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = "es-CO";
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.onstart = () => {
-        recognitionActive = true;
-        setStatus("Te escucho. Haz tu pregunta.");
-    };
-    recognition.onresult = (event) => {
-        let finalTranscript = "";
-        for (let index = event.resultIndex; index < event.results.length; index += 1) {
-            if (event.results[index].isFinal) {
-                finalTranscript += event.results[index][0].transcript;
-            }
-        }
-
-        if (finalTranscript.trim() && !busy) {
-            busy = true;
-            recognition.stop();
-            ask(finalTranscript);
-        }
-    };
-    recognition.onerror = (event) => {
-        switch (event.error) {
-            case "not-allowed":
-            case "service-not-allowed":
-                listening = false;
-                updateMicButton();
-                setStatus("El navegador bloqueó el micrófono o el servicio de voz. Permite el micrófono para este sitio y pulsa «Activar micrófono».");
-                break;
-            case "audio-capture":
-                listening = false;
-                updateMicButton();
-                setStatus("No se encontró un micrófono disponible. Conecta o selecciona un micrófono y vuelve a activarlo.");
-                break;
-            case "network":
-                setStatus("El navegador no pudo conectar con su servicio de reconocimiento de voz. Revisa Internet e inténtalo de nuevo.");
-                break;
-            case "language-not-supported":
-                listening = false;
-                updateMicButton();
-                setStatus("El navegador no admite reconocimiento de voz en español (Colombia).");
-                break;
-            case "no-speech":
-            case "aborted":
-                break;
-            default:
-                setStatus(`Falló el reconocimiento de voz (${event.error || "error desconocido"}). Revisa el micrófono y vuelve a intentarlo.`);
-        }
-    };
-    recognition.onend = () => {
-        recognitionActive = false;
-        if (!busy) {
-            scheduleListening();
+                : error instanceof Error
+                    ? error.message
+                    : "No se pudo acceder al micrófono. Revisa los permisos del navegador.");
         }
     };
 
     micButton.addEventListener("click", () => {
         if (listening) {
             listening = false;
-            window.clearTimeout(restartTimer);
-            if (recognitionActive) {
-                recognition.abort();
-            }
+            releaseMicrophone();
             stopSpeaking();
             updateMicButton();
             setStatus("Micrófono pausado.");
             return;
         }
-        startConversation();
+        void startConversation();
     });
 
     stopButton.addEventListener("click", () => {
@@ -277,5 +386,5 @@ export function initInteractiveAvatar() {
         }
     });
 
-    startConversation();
+    void startConversation();
 }
