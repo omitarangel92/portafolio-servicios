@@ -221,12 +221,31 @@ export function initInteractiveAvatar() {
         }
     };
     recognition.onerror = (event) => {
-        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-            listening = false;
-            updateMicButton();
-            setStatus("No se concedió permiso para el micrófono o el servicio de voz. Revisa los permisos y vuelve a activarlo.");
-        } else if (event.error !== "no-speech" && event.error !== "aborted") {
-            setStatus("Hubo un problema con el reconocimiento de voz. Intentaré escucharte de nuevo.");
+        switch (event.error) {
+            case "not-allowed":
+            case "service-not-allowed":
+                listening = false;
+                updateMicButton();
+                setStatus("El navegador bloqueó el micrófono o el servicio de voz. Permite el micrófono para este sitio y pulsa «Activar micrófono».");
+                break;
+            case "audio-capture":
+                listening = false;
+                updateMicButton();
+                setStatus("No se encontró un micrófono disponible. Conecta o selecciona un micrófono y vuelve a activarlo.");
+                break;
+            case "network":
+                setStatus("El navegador no pudo conectar con su servicio de reconocimiento de voz. Revisa Internet e inténtalo de nuevo.");
+                break;
+            case "language-not-supported":
+                listening = false;
+                updateMicButton();
+                setStatus("El navegador no admite reconocimiento de voz en español (Colombia).");
+                break;
+            case "no-speech":
+            case "aborted":
+                break;
+            default:
+                setStatus(`Falló el reconocimiento de voz (${event.error || "error desconocido"}). Revisa el micrófono y vuelve a intentarlo.`);
         }
     };
     recognition.onend = () => {
