@@ -41,10 +41,10 @@ export function initInteractiveAvatar() {
             : '<i class="fas fa-microphone" aria-hidden="true"></i> Activar micrófono';
     };
 
-    const resumeListening = () => {
+    const resumeListening = (statusMessage) => {
         busy = false;
         if (listening) {
-            setStatus("Respuesta terminada. Te escucho...");
+            setStatus(statusMessage || "Respuesta terminada. Te escucho...");
         }
     };
 
@@ -94,9 +94,9 @@ export function initInteractiveAvatar() {
         setStatus("Estoy preparando una respuesta...");
 
         if (!AI_ENDPOINT) {
-            const message = "Todavía no hay conexión con la inteligencia artificial. Falta configurar el servicio Gemini del portafolio.";
+            const message = "Todavía no hay conexión con la inteligencia artificial. Falta configurar el servicio del portafolio.";
             response.textContent = message;
-            speak(message);
+            resumeListening(message);
             return;
         }
 
@@ -133,13 +133,13 @@ export function initInteractiveAvatar() {
                     ? `No se pudo obtener una respuesta: ${error.message}`
                     : "No se pudo conectar con el asistente. Intenta de nuevo.";
             response.textContent = message;
-            speak(message);
+            resumeListening(message);
         }
     };
 
     const answerRecording = async (blob) => {
         if (!AI_ENDPOINT) {
-            throw new Error("Falta configurar el servicio Gemini del portafolio.");
+            throw new Error("Falta configurar el servicio de inteligencia artificial del portafolio.");
         }
 
         const dataUrl = await new Promise((resolve, reject) => {
@@ -165,13 +165,13 @@ export function initInteractiveAvatar() {
         });
         const data = await apiResponse.json();
         if (!apiResponse.ok) {
-            throw new Error(data.error || "Gemini no pudo procesar el audio.");
+            throw new Error(data.error || "El asistente no pudo procesar el audio.");
         }
         if (typeof data.transcript !== "string" || !data.transcript.trim()) {
             throw new Error("No se reconocieron palabras. Intenta hablar más cerca del micrófono.");
         }
         if (typeof data.reply !== "string" || !data.reply.trim()) {
-            throw new Error("Gemini no devolvió una respuesta. Intenta de nuevo.");
+            throw new Error("El asistente no devolvió una respuesta. Intenta de nuevo.");
         }
         return { transcript: data.transcript.trim(), reply: data.reply.trim() };
     };
@@ -200,7 +200,7 @@ export function initInteractiveAvatar() {
                     ? error.message
                     : "No se pudo procesar el audio. Intenta de nuevo.";
             response.textContent = message;
-            speak(message);
+            resumeListening(message);
         }
     };
 

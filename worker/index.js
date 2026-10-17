@@ -56,14 +56,27 @@ function originIsAllowed(origin, env) {
     return origin === env.ALLOWED_ORIGIN || ALLOWED_LOCAL_ORIGINS.has(origin);
 }
 
-function workersAIErrorResponse(error, origin) {
+function workersAIErrorResponse(error, origin, stage) {
     const detail = error instanceof Error ? error.message : "UnknownError";
-    console.error("Workers AI request failed", detail.slice(0, 300));
-    const quotaReached = /quota|neuron|daily limit|rate limit|too many requests/i.test(detail);
+    const safeDetail = detail
+        .replace(/https?:\/\/\S+/gi, "[endpoint]")
+        .replace(/\b(?:bearer|token|api[_ -]?key)\s+\S+/gi, "[credential]")
+        .replace(/[\r\n\t]+/g, " ")
+        .slice(0, 180);
+    console.error("Workers AI request failed", { stage, detail: safeDetail });
+    const normalizedDetail = detail.toLowerCase();
+    const quotaReached = /quota|neuron|daily limit|rate limit|too many requests|exceeded.*limit/i.test(normalizedDetail);
+    const modelUnavailable = /model.*(not found|unavailable|does not exist)|unknown model/i.test(normalizedDetail);
+    const audioFormatIssue = stage === "transcription"
+        && /audio|format|codec|decode|unsupported|invalid/i.test(normalizedDetail);
     return jsonResponse({
         error: quotaReached
-            ? "Se agotó el cupo diario gratuito de Cloudflare Workers AI. La cuota se reinicia diariamente; revisa el consumo en tu panel de Cloudflare."
-            : "Cloudflare Workers AI no pudo procesar la pregunta. Intenta de nuevo en un momento."
+            ? `Se agotó el cupo diario gratuito de Cloudflare Workers AI. La cuota se reinicia diariamente; revisa el consumo en tu panel de Cloudflare. Detalle: ${safeDetail}`
+            : modelUnavailable
+                ? `El modelo de ${stage === "transcription" ? "transcripción" : "respuesta"} no está disponible para esta cuenta de Cloudflare. Detalle: ${safeDetail}`
+                : audioFormatIssue
+                    ? `Cloudflare no pudo leer el formato del audio del navegador. Intenta usar Chrome o Edge actualizado. Detalle: ${safeDetail}`
+                    : `Cloudflare Workers AI falló durante ${stage === "transcription" ? "la transcripción del audio" : "la generación de la respuesta"}. Detalle: ${safeDetail}`
     }, quotaReached ? 429 : 502, origin);
 }
 
@@ -147,7 +160,8 @@ export default {
                 const transcription = await env.AI.run(SPEECH_MODEL, {
                     audio,
                     task: "transcribe",
-                    language: "spanish",
+                    language: "es",
+                    vad_filter: true,
                     initial_prompt: "Omar Angel Loaiza, Omitar, Ratimo Design, UX/UI, Manizales, Bogotá, AstraZeneca."
                 });
                 message = typeof transcription?.text === "string" ? transcription.text.trim() : "";
@@ -157,7 +171,7 @@ export default {
                     }, 422, origin);
                 }
             } catch (error) {
-                return workersAIErrorResponse(error, origin);
+                return workersAIErrorResponse(error, origin, "transcription");
             }
         } else {
             message = typeof body?.message === "string" ? body.message.trim() : "";
@@ -189,7 +203,7 @@ export default {
 
             return jsonResponse(isAudioRequest ? { transcript: message, reply } : { reply }, 200, origin);
         } catch (error) {
-            return workersAIErrorResponse(error, origin);
+            return workersAIErrorResponse(error, origin, "response");
         }
     }
 };
