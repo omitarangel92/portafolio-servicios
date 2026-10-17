@@ -5,6 +5,7 @@ import { initContact } from "./contact.js";
 import { initTheme } from "./theme.js";
 import { initTools, initDesigns } from "./sections.js";
 import { initInteractiveAvatar } from "./ai-avatar.js";
+import { initPortfolioTrail } from "./portfolio-trail.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
@@ -15,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initDesigns();
   initAnimations();
   initInteractiveAvatar();
+  initPortfolioTrail();
   setupModal();
 });
 

@@ -261,6 +261,149 @@ img {
     max-width: 560px;
 }
 
+.trail-start {
+    border-style: dashed;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.trail-start[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.portfolio-trail-stop[hidden] {
+    display: none !important;
+}
+
+.portfolio-trail-stop {
+    position: relative;
+    margin: 24px auto 0;
+    padding: 18px 20px;
+    max-width: 680px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background:
+        radial-gradient(ellipse at top left, color-mix(in srgb, var(--accent) 12%, transparent), transparent 58%),
+        var(--surface-solid);
+    box-shadow: 0 14px 38px rgba(0, 0, 0, .18);
+    transition: border-color .2s, transform .2s;
+}
+
+.portfolio-trail-stop.is-current {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.portfolio-trail-question {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+.portfolio-trail-number {
+    color: var(--accent);
+    font: 500 .65rem 'JetBrains Mono', monospace;
+    letter-spacing: .12em;
+}
+
+.portfolio-trail-progress-label {
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: .7rem;
+}
+
+.portfolio-trail-progress {
+    display: block;
+    width: 100%;
+    height: 5px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    appearance: none;
+    border: 0;
+    border-radius: 99px;
+    background: var(--soft-2);
+}
+
+.portfolio-trail-progress::-webkit-progress-bar {
+    border-radius: 99px;
+    background: var(--soft-2);
+}
+
+.portfolio-trail-progress::-webkit-progress-value {
+    border-radius: 99px;
+    background: var(--accent);
+    transition: width .35s ease;
+}
+
+.portfolio-trail-progress::-moz-progress-bar {
+    border-radius: 99px;
+    background: var(--accent);
+}
+
+.portfolio-trail-answer {
+    margin-bottom: 12px;
+    color: var(--text);
+    font-size: .9rem;
+}
+
+.portfolio-trail-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.portfolio-trail-button,
+.portfolio-trail-exit {
+    min-height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font: inherit;
+    transition: background .2s, border-color .2s, color .2s;
+}
+
+.portfolio-trail-button {
+    padding: 8px 14px;
+    border-color: var(--btn-bg);
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.portfolio-trail-button:hover:not(:disabled) {
+    filter: brightness(1.08);
+}
+
+.portfolio-trail-button:disabled {
+    cursor: default;
+    opacity: .8;
+}
+
+.portfolio-trail-exit {
+    padding: 7px 4px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--muted);
+    font-size: .75rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.portfolio-trail-button:focus-visible,
+.portfolio-trail-exit:focus-visible,
+.trail-start:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
 /* Botones */
 .btn-neon {
     background: var(--btn-bg);
@@ -1547,6 +1690,7 @@ img {
     }
 
     .hero-cta a,
+    .hero-cta button,
     .about-cta a {
         flex: 1 1 100%;
         justify-content: center;
@@ -1684,5 +1828,16 @@ img {
 
     .hero-title {
         font-size: 1.7rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .portfolio-trail-stop,
+    .portfolio-trail-progress::-webkit-progress-value {
+        transition: none;
     }
 }
